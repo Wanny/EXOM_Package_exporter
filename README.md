@@ -2,34 +2,46 @@
 
 This tool helps in exporting Packages from PS2 DDR and PC-based arcade DDR games, to make things a little easier when creating Packages for the DDR Extreme Omnimix.
 
-## Extreme Omnimix? What's that? ##
+## DDR Extreme Omnimix? What the F is that?
 
-It's a project made by someone else, to build a custom DDR Extreme Mix with the songs you like.<br>
+It's a project made by someone else, to build a custom DDR Extreme Mix with whatever songs you like (up to the maximum allowed by the game engine)
 The project is hosted privately and therefore I cannot provide more details... if you know, you know (sorry! ^^; )
 
-## Why this? ##
+## Why this?
+Story time!
 
-Songs that can be used in the game are called "packages" in the Extreme Omnimix toolset.<br>
-Thing is, old songs (from DDR 5th Mix and earlier) don't have the radar values and it's quite depressing to see an empty radar. Yes, I'm that picky.
+First of all, songs that can be used in the game are called "packages" in the Extreme Omnimix toolset
 
-A friend made a tool to get almost perfect values but it calculates them from an .sm file (not .ssq), what adds an extra hassle.<br>
-And... many older songs do appear in CS games, so why not get the values from there?
+I was manually creating pacjages from songs that weren't indluded in the released Omnimix pack, and the radars were empty... and they look bad.
 
-And, most impòrtantly... the Omnimix "pack" that was released includes only a handful of CS songs (at the discretion of the tool's creator).
+A friend made a tool to get almost perfect values but it calculates them from an `.sm` file (not the game's `.ssq` format), which  adds an extra hassle.
 
+And then, by reading the code of the Omnimix tool, it mentions that the radar values ARE atored in the game data. I managed to find them in the game I was taking the song from and they worked!
 
-tl;dr: This helps on making "packages" from CS games.
+So I was like "hmm, if they are all stored in the same position for each entry, why not a tool that gets them from all the songs at once?
 
-## Oh kay... tell me more, what does this ACTUALLY do? ##
+tl;dr: This helps on making "packages" from DDR games.
 
-It exports the `package.json` file (for each song) needed by the Omnimix toolset.<br>
-You'll have to get the actual files (song/preview mp3s, banner/bg, optional name card) yourself.
+## Oh kay... I have questions, tell me more.
 
+### What does this ACTUALLY do?
 
+Simply put, It exports the `package.json` file (for each song present in a game) needed by the Omnimix toolset.
 
-## Usage ##
+### Oh, and what do I need?
 
-### For the CLI version: ###
+Only one file!
+
+* For PS2 games, the executable is the `SLPM_xxx.yy`/`SLUS_xxx.yy`/`SLES_xxx.yy` file that's on the root of the game's disc
+* For arcade games (only DDR X3 supported for now) you need the `ddr.dll` file.
+
+### What about the actual files? You know, the audio, step date, etc?
+
+You have to source them yourself, as that's out of the scope of this tool.
+
+## Usage
+
+### For the CLI version:
 
 ```bash
 EXOM_PE_CLI.py [-h] [--config CONFIG] [--debug] file
@@ -37,15 +49,17 @@ EXOM_PE_CLI.py [-h] [--config CONFIG] [--debug] file
 
 Where:
 
-* `file` is the only required file.
-  * It can be a CS DDR executable (SLPM_xxx.yy/SLUS.xxx.yy/SLESxxx.yy) or an Arcade DDR `ddr.dll` file (only DDR X3 supported for now)
-- `-h`shows the help
-- `--config` loads a specific sonfiguration file. By default it uses `config.json` (included)
-- `--debug` prints debut information. Useful if you want to see the titles of the exported songs (assuming I didn't mess up when making the configuration for a game)
+* `file` is the only required file (see above)  
+* `-h`shows the help
+* `--config` loads a specific sonfiguration file. By default it uses `config.json` (included)
+* `--debug` prints debut information. Useful if you want to see the titles of the exported songs (assuming I didn't mess up when making the configuration for a game)
 
-### For the GUI version ###
+### For the GUI version:
 
 * Launch it with `py EXOM_PE_GUI.py`
 * On the window that opens, click on "Load binary file" and choose your desired file.
-* See the list populate neatly (any reference to certain Wiki is absoolutely intentional)
+* See the list populate neatly (any resemblance to certain Wiki is absolutely intentional)
 * Click on  "Export packages"
+
+Important to note, the GUI version uses existing functions from the CLI version.
+You must download **all** the files.
