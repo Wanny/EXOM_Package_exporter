@@ -2,26 +2,28 @@ import sys
 import os
 import json
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout,
-    QPushButton, QFileDialog, QMessageBox, QTabWidget,
-    QTableWidget, QTableWidgetItem, QLabel
+    QApplication, QMainWindow, QWidget, QVBoxLayout,QHBoxLayout, QSpacerItem, QSizePolicy,
+    QPushButton, QFileDialog, QMessageBox, QTabWidget,QTableWidget,QTableWidgetItem, QLabel,QFileDialog
 )
 from PySide6.QtGui import QFont, QColor,QBrush
 from PySide6.QtCore import Qt
 
-# Importa tus funciones del CLI
+import pandas as pd
+import xlsxwriter
+
+# Importing functions from the CLI module
 from EXOM_PE_CLI import (
     load_config, parse_titles, parse_titles_reverse, parse_titles_supernova,
-    read_consecutive_blocks, block_to_package, build_difficulties
+    parse_titles_sequential,read_consecutive_blocks, block_to_package, build_difficulties
 )
 
-# Colores por dificultad - tal como en RemyWiki.
+# Background colors for difficulties. Shamelessly taken from Remywiki.
 DIFF_COLORS = {
-    "beginner": QColor("#81E9FF"),  # celeste
-    "light": QColor("#FFFFAA"),     # amarillo
-    "standard": QColor("#FFAAAA"),  # rojo
-    "heavy": QColor("#00FF7F"),     # verde
-    "challenge": QColor("#DDAAFF")  # lila
+    "beginner": QColor("#81E9FF"), 
+    "light": QColor("#FFFFAA"),    
+    "standard": QColor("#FFAAAA"),  
+    "heavy": QColor("#00FF7F"),     
+    "challenge": QColor("#DDAAFF") 
 }
 
 class MainWindow(QMainWindow):
@@ -32,21 +34,76 @@ class MainWindow(QMainWindow):
         self.tabs = QTabWidget()
         self.setCentralWidget(self.tabs)
 
-        # Pestaña Extracción
+        # Extract tab
         self.tab_extract = QWidget()
         self.tabs.addTab(self.tab_extract, "Export")
 
         layout = QVBoxLayout()
 
-        # Label para mostrar el juego
-        self.lbl_game = QLabel("Game: (no file loaded)")
+        # Label to show the gane name
+        self.lbl_game = QLabel("Game: **NO FILE LOADED**")
         layout.addWidget(self.lbl_game)
 
         self.btn_load = QPushButton("Load binary file")
+        self.btn_load.setStyleSheet("""
+            QPushButton {
+                background-color: #131380;
+                color: white;
+                border-radius: 5px;
+                padding: 6px;
+            }
+            QPushButton:pressed {
+                background-color: #2c2c47;
+            }
+        """)
         self.btn_load.clicked.connect(self.load_file)
-        layout.addWidget(self.btn_load)
 
-        # Tabla de canciones
+        self.btn_export_excel = QPushButton("Export to Excel")
+        self.btn_export_excel.setEnabled(False)
+        self.btn_export_excel.setStyleSheet("""
+            QPushButton:enabled {
+                background-color: #075e07;
+                color: white;
+                border-radius: 5px;
+                padding: 6px;
+            }
+            QPushButton:disabled {
+                background-color: #042f04;
+            }                                            
+            QPushButton:pressed {
+                background-color: #042f04;
+            }
+        """)
+        self.btn_export_excel.clicked.connect(self.export_to_excel)
+
+        self.btn_extract = QPushButton("Export Packages")
+        self.btn_extract.setEnabled(False)
+        self.btn_extract.setStyleSheet("""
+            QPushButton:enabled {
+                background-color: #914e0a;
+                color: white;
+                border-radius: 5px;
+                padding: 6px;
+            }
+            QPushButton:disabled {
+                background-color: #442211;
+            }                                            
+            QPushButton:pressed {
+                background-color: #442211;
+            }
+        """)
+        self.btn_extract.clicked.connect(self.extract_songs)
+
+        #group buttons in the same line
+        bottom_layout = QHBoxLayout()
+        
+        bottom_layout.addWidget(self.btn_load)
+        bottom_layout.addWidget(self.btn_extract)
+        bottom_layout.addSpacerItem(QSpacerItem(0, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
+        bottom_layout.addWidget(self.btn_export_excel) 
+        layout.addLayout(bottom_layout)
+
+        # Song table
         self.song_table = QTableWidget()
         self.song_table.setColumnCount(13)
         self.song_table.setHorizontalHeaderLabels([
@@ -57,24 +114,16 @@ class MainWindow(QMainWindow):
         self.song_table.setFont(QFont("Segoe UI", 10)) 
         layout.addWidget(self.song_table)
 
-        # Ajustar anchos de columnas
+        # Ajdjust column width
         self.song_table.setColumnWidth(0, 45)   # ID
         self.song_table.setColumnWidth(1, 250)  # Título
         self.song_table.setColumnWidth(2, 65)   # BPM
-        # SP y DP: compactos
         for c in range(3, 13):
-            self.song_table.setColumnWidth(c, 50)
-
-
-
-        self.btn_extract = QPushButton("Export Packages")
-        self.btn_extract.setEnabled(False)
-        self.btn_extract.clicked.connect(self.extract_songs)
-        layout.addWidget(self.btn_extract)
+            self.song_table.setColumnWidth(c, 50) #difficulties
 
         self.tab_extract.setLayout(layout)
 
-        # Estado
+        # State
         self.current_file = None
         self.current_config = None
         self.titles_map = {}
@@ -85,31 +134,38 @@ class MainWindow(QMainWindow):
         if not file_path:
             return
 
-        # Cargar config.json
+        # Load config.json
         try:
             cfg_all = load_config("config.json")
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"No se pudo leer config.json\n{e}")
+            QMessageBox.critical(self, "Error", f"config.json couldn't be read\n{e}")
             return
 
         basename = os.path.basename(file_path)
         if basename not in cfg_all:
-            QMessageBox.warning(self, "Juego no encontrado",
-                                f"No hay configuración para '{basename}'")
+            QMessageBox.warning(self, "Game not found",
+                                f"There's no config for '{basename}'")
             return
 
         self.current_file = file_path
         self.current_config = cfg_all[basename]
 
-        # Mostrar nombre del juego
+        # Show gane name.
         game_name = self.current_config.get("game", basename)
         self.lbl_game.setText(f"Game: {game_name}")
 
-        # Leer archivo completo
+        # enable the Export to Excel button.
+        self.btn_extract.setEnabled(True)
+        self.btn_export_excel.setEnabled(True)
+
+        # Read the entire file
         with open(file_path, "rb") as f:
             data = f.read()
 
-        # Parsear títulos
+        # Read binary blocks
+        bloques = read_consecutive_blocks(file_path, self.current_config)
+
+        # Parse titles
         ts, te = self.current_config.get("titles_offset_start"), self.current_config.get("titles_offset_end")
         titles_map = {}
         if isinstance(ts, int) and isinstance(te, int) and te > ts:
@@ -120,24 +176,29 @@ class MainWindow(QMainWindow):
                 titles_map = parse_titles_reverse(data, ts, te)
             elif parser_name == "parse_titles_supernova":
                 titles_map = parse_titles_supernova(data, ts, te)
+            elif parser_name == "parse_titles_sequential":
+                titles_list = parse_titles_sequential(data, ts, te)
+                titles_map = {}
+                for i, b in enumerate(bloques):
+                    mid = b["music_id"].lower()
+                    if i < len(titles_list):
+                        titles_map[mid] = (titles_list[i], titles_list[i])
+                    else:
+                        titles_map[mid] = ("Title goes here", "Title goes here")
 
-        # Leer bloques binarios
-        bloques = read_consecutive_blocks(file_path, self.current_config)
-        for b in bloques:
-            b["music_id"] = b["music_id"].strip().lower()
 
-        # Filtrar títulos solo para IDs válidos
+        # Filter titles only for valid IDs
         valid_ids = {b["music_id"] for b in bloques}
         titles_map = {k: v for k, v in titles_map.items() if k in valid_ids}
 
-        # Overrides manuales
+        # Manual Overrides
         manual_titles = self.current_config.get("manual_titles", {})
         for b in bloques:
             mid = b["music_id"]
             if mid in manual_titles:
                 titles_map[mid] = (manual_titles[mid], manual_titles[mid])
 
-        # Mostrar en tabla
+        # Show table
         self.song_table.setRowCount(len(bloques))
         for row, b in enumerate(bloques):
             mid = b["music_id"]
@@ -153,7 +214,7 @@ class MainWindow(QMainWindow):
             sp = diffs["single"]
             dp = diffs["double"]
 
-            # ID, título y BPM
+            # ID, title and BPM
             self.song_table.setItem(row, 0, QTableWidgetItem(mid))
             self.song_table.setItem(row, 1, QTableWidgetItem(title))
             self.song_table.setItem(row, 2, QTableWidgetItem(bpm_str))
@@ -163,7 +224,7 @@ class MainWindow(QMainWindow):
             # DP con colores
             self._fill_diffs(dp, row, 8)
 
-        # Guardar estado
+        # Save state
         self.titles_map = titles_map
         self.bloques = bloques
         self.btn_extract.setEnabled(True)
@@ -187,7 +248,7 @@ class MainWindow(QMainWindow):
             font = QFont("Cascadia Mono", 11)
             font.setBold(True)
             item.setFont(font)
-            item.setForeground(QBrush(text_colors[lvl]))  # 👈 color del texto
+            item.setForeground(QBrush(text_colors[lvl]))  # text color
             self.song_table.setItem(row, col_start + i, item)
 
     def extract_songs(self):
@@ -214,6 +275,86 @@ class MainWindow(QMainWindow):
 
         QMessageBox.information(self, "Done!",
                                 f"Exported {len(json_data)} packages to '{outdir}'")
+    
+    def export_to_excel(self):
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save table...",
+            f"{self.current_config.get('game','DDR')}_songs.xlsx",
+            "Excel file (*.xlsx)"
+        )
+        if not file_path:
+            return
+
+        workbook = xlsxwriter.Workbook(file_path)
+        worksheet = workbook.add_worksheet("Songs")
+
+        # Formats
+        header_fmt = workbook.add_format({"bold": True, "align": "left", "bg_color": "#366092", "font_color": "white"})
+        num_fmt = workbook.add_format({"bold": False, "align": "left"})
+        # Colors per difficulty, same as in the GUI
+        diff_formats = {
+            "beginner": workbook.add_format({"bold": True, "align": "center", "bg_color": "#81E9FF"}),
+            "light": workbook.add_format({"bold": True, "align": "center", "bg_color": "#FFFFAA"}),
+            "standard": workbook.add_format({"bold": True, "align": "center", "bg_color": "#FFAAAA"}),
+            "heavy": workbook.add_format({"bold": True, "align": "center", "bg_color": "#00FF7F"}),
+            "challenge": workbook.add_format({"bold": True, "align": "center", "bg_color": "#DDAAFF"})
+        }
+
+        # Column widths 
+
+        # ID, Title, BPM
+        worksheet.set_column(0, 0, 7)   # ID
+        worksheet.set_column(1, 1, 60)   # Title
+        worksheet.set_column(2, 2, 8)    # BPM
+
+        # Difficulties
+        worksheet.set_column(3, 7, 6)    # SP 
+        worksheet.set_column(8, 12, 6)   # DP 
+
+        # Save headers
+        headers = [self.song_table.horizontalHeaderItem(c).text() for c in range(self.song_table.columnCount())]
+        for col, h in enumerate(headers):
+            worksheet.write(0, col, h, header_fmt)
+
+        # Save lines
+        for r in range(self.song_table.rowCount()):
+            for c in range(self.song_table.columnCount()):
+                item = self.song_table.item(r, c)
+                text = item.text() if item else ""
+
+                # Detect difficulty column, to set color
+                col_name = headers[c].lower()
+                if "beg" in col_name:
+                    fmt = diff_formats["beginner"]
+                elif "lgt" in col_name:
+                    fmt = diff_formats["light"]
+                elif "std" in col_name:
+                    fmt = diff_formats["standard"]
+                elif "hvy" in col_name:
+                    fmt = diff_formats["heavy"]
+                elif "chl" in col_name:
+                    fmt = diff_formats["challenge"]
+                else:
+                    fmt = num_fmt
+
+                # Store values as numbers when possible, so Excel doesn't bother with "number stored as text" when you open the file.
+                try:
+                    num_val = int(text) if text != "-" else None
+                except ValueError:
+                    num_val = None
+
+                if num_val is not None:
+                    worksheet.write_number(r+1, c, num_val, fmt)
+                else:
+                    worksheet.write(r+1, c, text, fmt)
+
+        worksheet.freeze_panes(1, 0)
+        
+        workbook.close()
+
+        QMessageBox.information(self, "Done!", f"Table exported to '{file_path}'")
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

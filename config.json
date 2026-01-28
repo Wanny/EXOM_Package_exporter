@@ -89,7 +89,8 @@
 
     "why_is_this": [
       "the 'skyh' entry is empty in the table despite the song being in the game",
-      "so we set the title manually"
+      "so we set the title manually",
+      "xenon and Mei are special cases because the title is confused with a short name"
     ],
 
     "manual_titles": {
@@ -181,10 +182,24 @@
     "offset": 2419808,
     "end_offset": 2433920,
     "block_size": 168,
+    "titles_offset_start": 2776880,
+    "titles_offset_end": 2796384,
+    "titles_parser": "parse_titles_supernova",
+
     "endianness": {
       "u16": "le",
       "u32": "be"
     },
+    
+    "why_is_this": [
+      "Entries are empty in the table despite the song being in the game"
+    ],
+
+    "manual_titles": {
+      "long2": "LONG TRAIN RUNNIN",
+      "lab3": "La Bamba"
+    },
+
     "fields": [
       ["music_id", 5, "string"],
       ["always_zero", 1, "u8"],
@@ -431,6 +446,15 @@
     "offset": 1932944,
     "end_offset": 1944784,
     "block_size": 160,
+    "titles_offset_start": 2076504,
+    "titles_offset_end": 2098072,
+    "titles_parser": "parse_titles",
+    
+    "manual_titles": {
+      "ichi": "1998",
+      "myma": "My My My"
+    },
+
     "endianness": {
       "u16": "le",
       "u32": "be"
@@ -524,6 +548,7 @@
       "kunc": "Kung Fu Fighting",
       "myma": "My My My"
     },
+
     "endianness": {
       "u16": "le",
       "u32": "be"
@@ -691,7 +716,7 @@
   },
 
     "ddr.dll": {
-    "game": "DDR X3",
+    "game": "DDR X3 AC",
     "offset": 2598088,
     "end_offset": 2954920,
     "block_size": 672,
@@ -701,9 +726,9 @@
     "titles_parser": "parse_titles_reverse",
 
     "why_is_this": [
-      "There's many short names in the table that don't have an associated title",
-      "xenon and Mei are special cases because the title is confused with a short name"
+      "There's many short names in the table that don't have an associated title"
     ],
+
     "manual_titles": {
         "xeno": "xenon",
         "drem": "Dream Machine",
@@ -902,6 +927,11 @@
     "titles_offset_start": 2966752,
     "titles_offset_end": 2989397,
     "titles_parser": "parse_titles_supernova",
+	
+    "interesting_trivia": [
+      "there's a 'sunk' entry in the file. fpr SUNKISS DROP",
+      "The actual entries for the Japanese and English versions are 'sunj' and 'sune' respectively"
+    ],
 
     "manual_titles": {
       "sunk": "SUNKiSS DROP"
@@ -990,11 +1020,20 @@
     "offset": 1153632,
     "end_offset": 1158032,
     "block_size": 100,
+    "titles_offset_start": 1437056,
+    "titles_offset_end": 1438126,
+    "titles_parser": "parse_titles_sequential",
 
     "endianness": {
       "u16": "le",
       "u32": "be"
     },
+
+    "warning": [
+      "DDRMAX JP doesn't have values for the difficulties, so they will be saved as 0",
+      "You will have to manually set them later in the file."
+    ],
+    
     "fields": [
       ["music_id", "0x00", 5, "string"],
       ["bpm1", "0x10", 2, "u16_le"],
@@ -1039,6 +1078,104 @@
       ["freeze_double_standard","0x58", 2, "u16_le"],
       ["freeze_double_heavy","0x5A", 2, "u16_le"] 
 
+    ],
+    "include_radar_single_beginner": false
+  },
+
+  "SLUS_219.17": {
+    "game":"DDR X2 US",    
+    "offset": 1755488,
+    "end_offset": 1765368,
+    "block_size": 152,
+    "titles_offset_start": 1996112,
+    "titles_offset_end": 2025627,
+    "difficulty_scale": "1_20",
+    "titles_parser": "parse_titles_supernova",
+
+    "interesting_trivia": [
+      "there's 3 'ropp' entries in the file (the content is the same)",
+      "And then 'ropp1', 'ropp2' and 'ropp3' taht are the actual different versions of Roppongi EVOLVED"
+    ],
+    "manual_titles": {
+      "lab3": "LA BAMBA",
+      "ropp1": "Roppongi EVOLVED Ver.A",
+      "ropp2": "Roppongi EVOLVED Ver.B",
+      "ropp3": "Roppongi EVOLVED Ver.C",
+      "ropp": "Roppongi EVOLVED (placeholder?)",
+      "dyna4": "DYNAMITE RAVE (X2)"
+    },
+
+    "endianness": {
+      "u16": "le",
+      "u32": "be"
+    },
+    "fields": [
+      ["music_id", "0x00", 5, "string"],          
+      ["memcard_link_id","0x20", 2, "u16_le"],
+      ["bpm1","0x1C", 2, "u16_le"],
+      ["bpm2","0x1e", 2, "u16_le"],
+
+      ["single_beginner","0x25", 1, "u8"],
+      ["single_light","0x26", 1, "u8"],
+      ["single_standard","0x27", 1, "u8"],
+      ["single_heavy","0x28", 1, "u8"],
+      ["single_challenge","0x29", 1, "u8"],
+      ["double_beginner","0x2A", 1, "u8"],
+      ["double_light","0x2B", 1, "u8"],
+      ["double_standard","0x2C", 1, "u8"],
+      ["double_heavy","0x2D", 1, "u8"],
+      ["double_challenge","0x2E", 1, "u8"],  
+
+      ["voltage_single_light","0x34",2, "u16_le"],
+      ["voltage_single_standard","0x36",2, "u16_le"],
+      ["voltage_single_heavy","0x38",2, "u16_le"],
+      ["voltage_single_challenge","0x3A",2, "u16_le"],
+      ["voltage_double_light","0x3C",2, "u16_le"],
+      ["voltage_double_standard","0x3E",2, "u16_le"],
+      ["voltage_double_heavy","0x40",2, "u16_le"],
+      ["voltage_double_challenge","0x42",2, "u16_le"],
+      ["voltage_single_beginner","0x44",2, "u16_le"],
+
+      ["stream_single_light","0x46",2, "u16_le"],
+      ["stream_single_standard","0x48",2, "u16_le"],
+      ["stream_single_heavy","0x4A",2, "u16_le"],
+      ["stream_single_challenge","0x4C",2, "u16_le"],
+      ["stream_double_light","0x4E",2, "u16_le"],
+      ["stream_double_standard","0x50",2, "u16_le"],
+      ["stream_double_heavy","0x52",2, "u16_le"],
+      ["stream_double_challenge","0x54",2, "u16_le"],
+      ["stream_single_beginner","0x56",2, "u16_le"],
+
+      ["air_single_light","0x58",2, "u16_le"],
+      ["air_single_standard","0x5A",2, "u16_le"],
+      ["air_single_heavy","0x5C",2, "u16_le"],
+      ["air_single_challenge","0x5E",2, "u16_le"],
+      ["air_double_light","0x60",2, "u16_le"],
+      ["air_double_standard","0x62",2, "u16_le"],
+      ["air_double_heavy","0x64",2, "u16_le"],
+      ["air_double_challenge","0x66",2, "u16_le"],
+      ["air_single_beginner","0x68",2, "u16_le"],
+
+      ["chaos_single_light","0x6A",2, "u16_le"],
+      ["chaos_single_standard","0x6C",2, "u16_le"],
+      ["chaos_single_heavy","0x6E",2, "u16_le"],
+      ["chaos_single_challenge","0x70",2, "u16_le"],
+      ["chaos_double_light","0x72",2, "u16_le"],
+      ["chaos_double_standard","0x74",2, "u16_le"],
+      ["chaos_double_heavy","0x76",2, "u16_le"],
+      ["chaos_double_challenge","0x78",2, "u16_le"],
+      ["chaos_single_beginner","0x7A",2, "u16_le"],
+
+      ["freeze_single_light","0x7C",2, "u16_le"],
+      ["freeze_single_standard","0x7E",2, "u16_le"],
+      ["freeze_single_heavy","0x80",2, "u16_le"],
+      ["freeze_single_challenge","0x82",2, "u16_le"],
+      ["freeze_double_light","0x84",2, "u16_le"],
+      ["freeze_double_standard","0x86",2, "u16_le"],
+      ["freeze_double_heavy","0x88",2, "u16_le"],
+      ["freeze_double_challenge","0x8A",2, "u16_le"],
+      ["freeze_single_beginner","0x8C",2, "u16_le"]
+      
     ],
     "include_radar_single_beginner": false
   }

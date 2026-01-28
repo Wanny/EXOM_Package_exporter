@@ -49,35 +49,35 @@ def parse_difficulties(raw_bytes: bytes) -> Dict[str, int]:
 
 def parse_block(data: bytes, fields: List[List[Any]]) -> Dict[str, Any]:
     """
-    Parser híbrido:
-    - Formato secuencial: ["nombre", size, tipo]
-    - Formato con offset: ["nombre", offset, size, tipo]
-      El offset puede ser entero decimal o string "0x.." en hex.
+    Hybrid parser::
+    - Sequential format: ["name", size, tipo]
+    - Offet input format: ["name", offset, size, tipo]
+      Offset can be integer or a string "0x.." with hex values.
     """
     result: Dict[str, Any] = {}
     offset = 0
 
     for field in fields:
         if len(field) == 3:
-            # Formato secuencial
+            # Sequential format
             name, size, ftype = field
             pos = offset
             offset += size
         elif len(field) == 4:
-            # Formato con offset explícito
+            # Format with explicit offset
             name, pos, size, ftype = field
-            # Convertir string "0x.." a entero
+            # Convert string offsets to integer
             if isinstance(pos, str):
                 if pos.startswith("0x"):
                     pos = int(pos, 16)
                 else:
-                    pos = int(pos)  # por si viene como "12"
+                    pos = int(pos)  # In case it comes as "12"
         else:
-            raise ValueError(f"Formato de campo inválido: {field}")
+            raise ValueError(f"Invalid Field format: {field}")
 
         chunk = data[pos:pos+size]
         if len(chunk) != size:
-            raise ValueError(f"Bloque incompleto al leer '{name}' (esperado {size}, got {len(chunk)})")
+            raise ValueError(f"Incomplete block when reading '{name}' (expected {size}, got {len(chunk)})")
 
         if ftype == "string":
             result[name] = chunk.decode("ascii", errors="ignore").strip("\x00")
@@ -297,7 +297,7 @@ def parse_titles(data: bytes, start: int, end: int) -> dict:
 # ----------------------------
 # Function to parse titles from the file.
 # This function is for games from DDR X nowards where the title is stored before the ahort name
-# Be warned, the "title2" field may include other song's name because of "orphaned" titled.
+# Be warned, the "title2" field may include other song's name because of "orphaned" titles.
 # ----------------------------
 
 def parse_titles_reverse(data: bytes, start: int, end: int) -> dict:
@@ -366,6 +366,7 @@ def parse_titles_reverse(data: bytes, start: int, end: int) -> dict:
     return titles_map
 
 # ----------------------------
+# Because nothing in life is that easy, there's another title structure...
 # Title Parser for SuperNOVA and SuperNOVA2. The stupid games use ONE 00 to separate music ID and title...
 # and ONE 00 to separate the title from the next entry. Ugh.
 # ----------------------------
@@ -429,6 +430,30 @@ def parse_titles_supernova(data: bytes, start: int, end: int) -> dict:
     return titles_map
 
 # ----------------------------
+# UGH WHY KONAMI. DDRMAX JP was special... it didn't have a peroper title "table", instead titles are just shown in order.
+# So yup, another parser <3
+# ----------------------------
+
+def parse_titles_sequential(data: bytes, start: int, end: int) -> list[str]:
+    """
+    Parser for games without short name table:
+    - Titles appear in order, separated by one or more 0x00.
+    - Returns a list of titles in the same order.
+    """
+    raw = data[start:end]
+    # Use 0x00 as separator and filter empties.
+    chunks = [c for c in raw.split(b"\x00") if c.strip()]
+    titles = []
+    for c in chunks:
+        try:
+            t = c.decode("utf-8").strip()
+        except UnicodeDecodeError:
+            t = c.decode("latin-1").strip()
+        titles.append(t)
+    return titles
+
+
+# ----------------------------
 # Ewport: global (single file) and per song.
 # ----------------------------
 def block_to_package(b: Dict[str, Any], cfg: Dict[str, Any], slpm_name: str, titles_map: dict) -> Dict[str, Any]:
@@ -461,7 +486,7 @@ def block_to_package(b: Dict[str, Any], cfg: Dict[str, Any], slpm_name: str, tit
             "background": f"{music_id}_bk.png",
             "banner_preview": f"{music_id}_ta.png",
             "banner": f"{music_id}_th.png",
-            "chart": f"{music_id}.csq",
+            "chart": f"{music_id}.ssq",
             "song": "song.mp3",
             "preview": "preview.mp3"
         },
@@ -514,7 +539,7 @@ def main():
     )
     parser.add_argument("file", help="Binary file path (e.g. SLPM_624.27)")
     parser.add_argument("--config", default="config.json", help="JSON configuration file path")
-    parser.add_argument("--debug", action="store_true", help="Ptint debug information")
+    parser.add_argument("--debug", action="store_true", help="Print debug information")
     args = parser.parse_args()
 
     # Load config .json file and throw an error if there's no config for the input file.
@@ -533,6 +558,10 @@ def main():
     with open(args.file, "rb") as f:
         data = f.read()
 
+    # Read binary blocks
+    bloques = read_consecutive_blocks(args.file, cfg)
+
+
     # Pick titles parser from the config file
     titles_map = {}
     title_start = cfg.get("titles_offset_start")
@@ -545,14 +574,17 @@ def main():
             titles_map = parse_titles_reverse(data, title_start, title_end)
         elif parser_name == "parse_titles_supernova":
             titles_map = parse_titles_supernova(data, title_start, title_end)
+        elif parser_name == "parse_titles_sequential":
+            titles_list = parse_titles_sequential(data, title_start, title_end)
+            # Match titles to blocks in order
+            titles_map = {}
+            for i, b in enumerate(bloques):
+                mid = b["music_id"].lower()
+                if i < len(titles_list):
+                    titles_map[mid] = (titles_list[i], titles_list[i])
+                else:
+                    titles_map[mid] = ("Title goes here", "Title goes here")
 
-
-    # Read binary blocks
-    bloques = read_consecutive_blocks(args.file, cfg)
-
-    # Normalide ID blocks
-    for b in bloques:
-        b["music_id"] = b["music_id"].strip().lower()
 
     # Filter titles only for existing music IDs
     valid_ids = {b["music_id"].lower() for b in bloques}
@@ -598,7 +630,7 @@ def main():
     root_outdir = f"{game_name}_packages"
     os.makedirs(root_outdir, exist_ok=True)
 
-    # Export songs.json file with ALL the packagd for the songs in the folders.
+    # Export songs.json file with ALL the packages for the songs in the folders.
     songs_path = os.path.join(root_outdir, "songs.json")
     with open(songs_path, "w", encoding="utf-8") as f:
         json.dump(json_data, f, indent=4, ensure_ascii=False)
@@ -609,7 +641,7 @@ def main():
         with open(os.path.join(folder, "package.json"), "w", encoding="utf-8") as f:
             json.dump(pkg, f, indent=4, ensure_ascii=False)
 
-    print(f"Exported {len(json_data)} blocks  to songs.json y packages per song to '{root_outdir}/<music_id>/'")
+    print(f"Exported {len(json_data)} blocks to songs.json and the respective song folders to '{root_outdir}/<music_id>/'")
 
 if __name__ == "__main__":
     main()
