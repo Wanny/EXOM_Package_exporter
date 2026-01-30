@@ -95,13 +95,13 @@ class MainWindow(QMainWindow):
         self.btn_makepkg.clicked.connect(self.create_pkgs)
 
         #group buttons in the same line
-        bottom_layout = QHBoxLayout()
+        button_layout = QHBoxLayout()
         
-        bottom_layout.addWidget(self.btn_load)
-        bottom_layout.addWidget(self.btn_makepkg)
-        bottom_layout.addSpacerItem(QSpacerItem(0, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
-        bottom_layout.addWidget(self.btn_export_excel) 
-        layout.addLayout(bottom_layout)
+        button_layout.addWidget(self.btn_load)
+        button_layout.addWidget(self.btn_makepkg)
+        button_layout.addSpacerItem(QSpacerItem(0, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
+        button_layout.addWidget(self.btn_export_excel) 
+        layout.addLayout(button_layout)
 
         # Song table
         self.song_table = QTableWidget()
@@ -151,7 +151,7 @@ class MainWindow(QMainWindow):
         self.current_file = file_path
         self.current_config = cfg_all[basename]
 
-        # Once a valid file is open, show gane name...
+        # Once a valid file is open, show file name and respective gane name...
         game_name = self.current_config.get("game", basename)
         self.lbl_game.setText(f"File: <b>{basename}</b> - Game: <b>{game_name}</b>")
 
@@ -159,7 +159,7 @@ class MainWindow(QMainWindow):
         self.btn_makepkg.setEnabled(True)
         self.btn_export_excel.setEnabled(True)
 
-        # Read the entire file do do stuff
+        # Read the entire file to do stuff
         with open(file_path, "rb") as f:
             data = f.read()
 
