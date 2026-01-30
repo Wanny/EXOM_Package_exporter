@@ -535,7 +535,7 @@ def load_config(path: str) -> Dict[str, Any]:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Extracts data from binary DDR data to a single JSON and a package.json per song"
+        description="Exports data from binary DDR data to a single JSON and a package.json per song"
     )
     parser.add_argument("file", help="Binary file path (e.g. SLPM_624.27)")
     parser.add_argument("--config", default="config.json", help="JSON configuration file path")
@@ -625,12 +625,12 @@ def main():
         pkg = block_to_package(b, cfg, basename, titles_map)
         json_data.append(pkg)
 
-    # Export per song
+    # Package per song
     game_name = cfg.get("game", os.path.splitext(basename)[0])
     root_outdir = f"{game_name}_packages"
     os.makedirs(root_outdir, exist_ok=True)
 
-    # Export songs.json file with ALL the packages for the songs in the folders.
+    # Create songs.json file with ALL the packages for the songs in the folders.
     songs_path = os.path.join(root_outdir, "songs.json")
     with open(songs_path, "w", encoding="utf-8") as f:
         json.dump(json_data, f, indent=4, ensure_ascii=False)
@@ -641,7 +641,7 @@ def main():
         with open(os.path.join(folder, "package.json"), "w", encoding="utf-8") as f:
             json.dump(pkg, f, indent=4, ensure_ascii=False)
 
-    print(f"Exported {len(json_data)} blocks to songs.json and the respective song folders to '{root_outdir}/<music_id>/'")
+    print(f"Created {len(json_data)} blocks to songs.json and the respective song folders to '{root_outdir}/<music_id>/'")
 
 if __name__ == "__main__":
     main()

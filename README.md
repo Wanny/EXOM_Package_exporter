@@ -12,13 +12,13 @@ Story time!
 
 First of all, songs that can be used in the game are called "packages" in the Extreme Omnimix toolset
 
-I was manually creating pacjages from songs that weren't indluded in the released Omnimix pack, and the radars were empty... and they look bad.
+I was manually creating packages for songs that weren't included in the released Omnimix pack, and the radars were empty... and they look bad.
 
 A friend made a tool to get almost perfect values but it calculates them from an `.sm` file (not the game's `.ssq` format), which  adds an extra hassle.
 
 And then, by reading the code of the Omnimix tool, it mentions that the radar values ARE atored in the game data. I managed to find them in the game I was taking the song from and they worked!
 
-So I was like "hmm, if they are all stored in the same position for each entry, why not a tool that gets them from all the songs at once?
+So I was like "hmm, if they are all stored in the same position for each entry of the game, why not a tool that gets them from all the songs at once?
 
 tl;dr: This helps on making "packages" from DDR games.
 
@@ -26,16 +26,16 @@ tl;dr: This helps on making "packages" from DDR games.
 
 ### What does this ACTUALLY do?
 
-Simply put, It exports the `package.json` file (for each song present in a game) needed by the Omnimix toolset.
+Simply put, It creates the `package.json` file (for each song present in a game) needed by the Omnimix toolset.
 
 ### Oh, and what do I need?
 
 Only one file!
 
-* For PS2 games, the executable is the `SLPM_xxx.yy`/`SLUS_xxx.yy`/`SLES_xxx.yy` file that's on the root of the game's disc
+* For PS2 games, you need the executable. It is the `SLPM_xxx.yy`/`SLUS_xxx.yy`/`SLES_xxx.yy` file that's on the root of the game's disc
 * For arcade games (only DDR X3 supported for now) you need the `ddr.dll` file.
 
-### What about the actual files? You know, the audio, step date, etc?
+### What about the actual files? You know, the audio, step data, etc?
 
 You have to source them yourself, as that's out of the scope of this tool.
 
@@ -60,6 +60,8 @@ Where:
 * On the window that opens, click on "Load binary file" and choose your desired file.
 * See the list populate neatly (any resemblance to certain Wiki is absolutely intentional)
 * Click on  "Export packages"
+* Additioanlly, you can export the contents of the table to an Excel file with the "Export to Excel" button.
 
-Important to note, the GUI version uses existing functions from the CLI version.
-You must download **all** the files.
+#### Important 
+The GUI version uses existing functions from the CLI version.
+You must download **both** versions.

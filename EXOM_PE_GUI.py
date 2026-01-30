@@ -41,7 +41,7 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout()
 
         # Label to show the gane name
-        self.lbl_game = QLabel("Game: **NO FILE LOADED**")
+        self.lbl_game = QLabel("File: **NO FILE LOADED**")
         layout.addWidget(self.lbl_game)
 
         self.btn_load = QPushButton("Load binary file")
@@ -76,9 +76,9 @@ class MainWindow(QMainWindow):
         """)
         self.btn_export_excel.clicked.connect(self.export_to_excel)
 
-        self.btn_extract = QPushButton("Export Packages")
-        self.btn_extract.setEnabled(False)
-        self.btn_extract.setStyleSheet("""
+        self.btn_makepkg = QPushButton("Create Packages")
+        self.btn_makepkg.setEnabled(False)
+        self.btn_makepkg.setStyleSheet("""
             QPushButton:enabled {
                 background-color: #914e0a;
                 color: white;
@@ -92,13 +92,13 @@ class MainWindow(QMainWindow):
                 background-color: #442211;
             }
         """)
-        self.btn_extract.clicked.connect(self.extract_songs)
+        self.btn_makepkg.clicked.connect(self.create_pkgs)
 
         #group buttons in the same line
         bottom_layout = QHBoxLayout()
         
         bottom_layout.addWidget(self.btn_load)
-        bottom_layout.addWidget(self.btn_extract)
+        bottom_layout.addWidget(self.btn_makepkg)
         bottom_layout.addSpacerItem(QSpacerItem(0, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
         bottom_layout.addWidget(self.btn_export_excel) 
         layout.addLayout(bottom_layout)
@@ -114,12 +114,12 @@ class MainWindow(QMainWindow):
         self.song_table.setFont(QFont("Segoe UI", 10)) 
         layout.addWidget(self.song_table)
 
-        # Ajdjust column width
-        self.song_table.setColumnWidth(0, 45)   # ID
-        self.song_table.setColumnWidth(1, 250)  # Título
-        self.song_table.setColumnWidth(2, 65)   # BPM
+        # Ajdjust column widths
+        self.song_table.setColumnWidth(0, 47)   # ID
+        self.song_table.setColumnWidth(1, 408)  # Title
+        self.song_table.setColumnWidth(2, 68)   # BPM
         for c in range(3, 13):
-            self.song_table.setColumnWidth(c, 50) #difficulties
+            self.song_table.setColumnWidth(c, 45) # Difficulties
 
         self.tab_extract.setLayout(layout)
 
@@ -140,7 +140,8 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"config.json couldn't be read\n{e}")
             return
-
+        
+        # If a file is loaded and there's no config for it in the json, yell at the user
         basename = os.path.basename(file_path)
         if basename not in cfg_all:
             QMessageBox.warning(self, "Game not found",
@@ -150,15 +151,15 @@ class MainWindow(QMainWindow):
         self.current_file = file_path
         self.current_config = cfg_all[basename]
 
-        # Show gane name.
+        # Once a valid file is open, show gane name...
         game_name = self.current_config.get("game", basename)
-        self.lbl_game.setText(f"Game: {game_name}")
+        self.lbl_game.setText(f"File: <b>{basename}</b> - Game: <b>{game_name}</b>")
 
-        # enable the Export to Excel button.
-        self.btn_extract.setEnabled(True)
+        # ...and the Export to Excel button
+        self.btn_makepkg.setEnabled(True)
         self.btn_export_excel.setEnabled(True)
 
-        # Read the entire file
+        # Read the entire file do do stuff
         with open(file_path, "rb") as f:
             data = f.read()
 
@@ -198,7 +199,7 @@ class MainWindow(QMainWindow):
             if mid in manual_titles:
                 titles_map[mid] = (manual_titles[mid], manual_titles[mid])
 
-        # Show table
+        # Show table with the good stuff
         self.song_table.setRowCount(len(bloques))
         for row, b in enumerate(bloques):
             mid = b["music_id"]
@@ -208,7 +209,7 @@ class MainWindow(QMainWindow):
             title = raw_titles[0]
 
             bpm1, bpm2 = b.get("bpm1", 0), b.get("bpm2", 0)
-            bpm_str = str(bpm1) if bpm1 == bpm2 else f"{bpm2}-{bpm1}"
+            bpm_str = str(bpm1) if bpm1 == bpm2 else f"{bpm2}-{bpm1}" # BPM1 is the MAX one, so we show BPM2 first.
 
             diffs = build_difficulties(b, self.current_config)
             sp = diffs["single"]
@@ -219,25 +220,27 @@ class MainWindow(QMainWindow):
             self.song_table.setItem(row, 1, QTableWidgetItem(title))
             self.song_table.setItem(row, 2, QTableWidgetItem(bpm_str))
 
-            # SP con colores
+            # SP With colors
             self._fill_diffs(sp, row, 3)
-            # DP con colores
+            # DP with colors
             self._fill_diffs(dp, row, 8)
+
+            # Adjust font for ID
+            id_font = QFont("Courier New", 10)
+            id_font.setBold(True)
+
+            for r in range(self.song_table.rowCount()):
+                item = self.song_table.item(r, 0)
+                if item:
+                    item.setFont(id_font)
 
         # Save state
         self.titles_map = titles_map
         self.bloques = bloques
-        self.btn_extract.setEnabled(True)
+        self.btn_makepkg.setEnabled(True)
 
     def _fill_diffs(self, d, row, col_start):
         levels = ["beginner", "light", "standard", "heavy", "challenge"]
-        text_colors = {
-            "beginner": QColor(0, 0, 0),   
-            "light": QColor(0, 0, 0),      
-            "standard": QColor(0, 0, 0), 
-            "heavy": QColor(0, 0, 0),    
-            "challenge": QColor(0, 0, 0) 
-        }
 
         for i, lvl in enumerate(levels):
             val = d.get(lvl, 0)
@@ -248,10 +251,12 @@ class MainWindow(QMainWindow):
             font = QFont("Cascadia Mono", 11)
             font.setBold(True)
             item.setFont(font)
-            item.setForeground(QBrush(text_colors[lvl]))  # text color
+            item.setForeground(QColor("#000000"))  # text color. Let's make sure it's black.
             self.song_table.setItem(row, col_start + i, item)
 
-    def extract_songs(self):
+    def create_pkgs(self):
+        # There is NO way to see this message since the buttons are disabled until a *valid* vile is open.
+        # Let's have it as a failsafe just for the lulz.
         if not self.current_file or not self.current_config:
             QMessageBox.warning(self, "Error", "No file loaded.")
             return
@@ -274,7 +279,7 @@ class MainWindow(QMainWindow):
                 json.dump(pkg, f, indent=4, ensure_ascii=False)
 
         QMessageBox.information(self, "Done!",
-                                f"Exported {len(json_data)} packages to '{outdir}'")
+                                f"Created {len(json_data)} packages to '{outdir}'")
     
     def export_to_excel(self):
         file_path, _ = QFileDialog.getSaveFileName(
@@ -291,7 +296,7 @@ class MainWindow(QMainWindow):
 
         # Formats
         header_fmt = workbook.add_format({"bold": True, "align": "left", "bg_color": "#366092", "font_color": "white"})
-        num_fmt = workbook.add_format({"bold": False, "align": "left"})
+        txt_fmt = workbook.add_format({"bold": False, "align": "left"})
         # Colors per difficulty, same as in the GUI
         diff_formats = {
             "beginner": workbook.add_format({"bold": True, "align": "center", "bg_color": "#81E9FF"}),
@@ -304,8 +309,8 @@ class MainWindow(QMainWindow):
         # Column widths 
 
         # ID, Title, BPM
-        worksheet.set_column(0, 0, 7)   # ID
-        worksheet.set_column(1, 1, 60)   # Title
+        worksheet.set_column(0, 0, 7)    # ID
+        worksheet.set_column(1, 1, 65)   # Title
         worksheet.set_column(2, 2, 8)    # BPM
 
         # Difficulties
@@ -336,7 +341,7 @@ class MainWindow(QMainWindow):
                 elif "chl" in col_name:
                     fmt = diff_formats["challenge"]
                 else:
-                    fmt = num_fmt
+                    fmt = txt_fmt
 
                 # Store values as numbers when possible, so Excel doesn't bother with "number stored as text" when you open the file.
                 try:
@@ -347,7 +352,7 @@ class MainWindow(QMainWindow):
                 if num_val is not None:
                     worksheet.write_number(r+1, c, num_val, fmt)
                 else:
-                    worksheet.write(r+1, c, text, fmt)
+                    worksheet.write(r+1, c, text, fmt)        
 
         worksheet.freeze_panes(1, 0)
         
@@ -359,6 +364,6 @@ class MainWindow(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
-    window.resize(1000, 600)
+    window.resize(1050, 600)
     window.show()
     sys.exit(app.exec())
