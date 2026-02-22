@@ -1,0 +1,102 @@
+QPushButton#load_button {
+    background-color: #0066ff;
+    color: white;
+    border-radius: 5px;
+    padding: 6px;
+}
+QPushButton#load_button:pressed {
+    background-color: #2c2c47;
+}
+
+
+QPushButton#export_button:enabled {
+    background-color: #075e07;
+    color: white;
+    border-radius: 5px;
+    padding: 6px;
+}
+QPushButton#export_button:disabled {
+    background-color: #212121 ;
+}                                            
+QPushButton#export_button:pressed {
+    background-color: #042f04;
+}
+
+
+QPushButton#makepkg_button:enabled {
+    background-color: #914e0a;
+    color: white;
+    border-radius: 5px;
+    padding: 6px;
+}
+QPushButton#makepkg_button:disabled {
+    background-color: #212121 ;
+}                                            
+QPushButton#makepkg_button:pressed {
+    background-color: #442211;
+}
+
+QPushButton#load_cfg {
+    background-color: #0066ff;
+    color: white;
+    border-radius: 5px;
+    padding: 6px;
+}
+QPushButton#load_cfg:disabled {
+    background-color: #212121 ;
+}                      
+QPushButton#load_cfg:pressed {
+    background-color: #2c2c47;
+}
+
+QPushButton#new_cfg {
+    background-color: #00c853 ;
+    color: white;
+    border-radius: 5px;
+    padding: 6px;
+}
+QPushButton#new_cfg:disabled {
+    background-color: #212121 ;
+}
+QPushButton#new_cfg:pressed {
+    background-color: #006128;
+}
+
+QPushButton#copy_cfg {
+    background-color: #7e7e7e  ;
+    color: #f0f0f0 ;
+    border-radius: 5px;
+    padding: 6px;
+}
+QPushButton#copy_cfg:disabled {
+    background-color: #212121 ;
+}                      
+QPushButton#copy_cfg:pressed {
+    background-color: #3A3B3C ;
+}
+
+QPushButton#del_cfg {
+    background-color: #ad0000  ;
+    color: #ffc1cc ;
+    border-radius: 5px;
+    padding: 6px;
+}
+QPushButton#del_cfg:disabled {
+    background-color: #212121 ;
+}                      
+QPushButton#del_cfg:pressed {
+    background-color: #630000 ;
+}
+
+QPushButton#save_cfg:enabled {
+    background-color: #914e0a;
+    color: white;
+    border-radius: 5px;
+    padding: 6px;
+}
+QPushButton#save_cfg:disabled {
+    background-color: #212121 ;
+}                                            
+QPushButton#save_cfg:pressed {
+    background-color: #442211;
+}

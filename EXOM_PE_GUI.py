@@ -11,6 +11,9 @@ from PySide6.QtCore import Qt
 import pandas as pd
 import xlsxwriter
 
+from config_editor import ConfigEditorTab
+
+
 # Importing functions from the CLI module
 from EXOM_PE_CLI import (
     load_config, parse_titles, parse_titles_reverse, parse_titles_supernova,
@@ -38,6 +41,11 @@ class MainWindow(QMainWindow):
         self.tab_extract = QWidget()
         self.tabs.addTab(self.tab_extract, "Export")
 
+        #Config tab
+        self.tab_config = ConfigEditorTab()
+        self.tabs.addTab(self.tab_config, "Config Editor")
+
+
         layout = QVBoxLayout()
 
         # Label to show the gane name
@@ -45,53 +53,19 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.lbl_game)
 
         self.btn_load = QPushButton("Load binary file")
-        self.btn_load.setStyleSheet("""
-            QPushButton {
-                background-color: #131380;
-                color: white;
-                border-radius: 5px;
-                padding: 6px;
-            }
-            QPushButton:pressed {
-                background-color: #2c2c47;
-            }
-        """)
+        self.btn_load.setObjectName("load_button"),
         self.btn_load.clicked.connect(self.load_file)
 
         self.btn_export_excel = QPushButton("Export to Excel")
         self.btn_export_excel.setEnabled(False)
-        self.btn_export_excel.setStyleSheet("""
-            QPushButton:enabled {
-                background-color: #075e07;
-                color: white;
-                border-radius: 5px;
-                padding: 6px;
-            }
-            QPushButton:disabled {
-                background-color: #042f04;
-            }                                            
-            QPushButton:pressed {
-                background-color: #042f04;
-            }
-        """)
+        self.btn_export_excel.setObjectName("export_button"),
+
+
         self.btn_export_excel.clicked.connect(self.export_to_excel)
 
         self.btn_makepkg = QPushButton("Create Packages")
         self.btn_makepkg.setEnabled(False)
-        self.btn_makepkg.setStyleSheet("""
-            QPushButton:enabled {
-                background-color: #914e0a;
-                color: white;
-                border-radius: 5px;
-                padding: 6px;
-            }
-            QPushButton:disabled {
-                background-color: #442211;
-            }                                            
-            QPushButton:pressed {
-                background-color: #442211;
-            }
-        """)
+        self.btn_makepkg.setObjectName("makepkg_button"),
         self.btn_makepkg.clicked.connect(self.create_pkgs)
 
         #group buttons in the same line
@@ -363,6 +337,13 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    
+    try:
+        with open("style.qss", "r", encoding="utf-8") as f:
+            app.setStyleSheet(f.read())
+    except Exception:
+        pass
+    
     window = MainWindow()
     window.resize(1050, 600)
     window.show()
