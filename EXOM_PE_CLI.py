@@ -490,7 +490,7 @@ def block_to_package(b: Dict[str, Any], cfg: Dict[str, Any], slpm_name: str, tit
             "song": "song.mp3",
             "preview": "preview.mp3"
         },
-        "album": cfg.get("game", "DDR CS"),
+        "album":  "DDR CS",
         "game_category": "DDR CS"
     }
 

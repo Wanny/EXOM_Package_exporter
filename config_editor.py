@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
 )
 
 from PySide6.QtCore import Qt
-import re
+
 
 # This class is used to save the config.json in a compact way. Has to be defined before anything else.
 class CompactJSONEncoder(json.JSONEncoder):

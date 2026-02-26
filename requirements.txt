@@ -1,0 +1,4 @@
+json
+pyside6
+pyside6_addons
+xlswriter

@@ -5,10 +5,9 @@ from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout,QHBoxLayout, QSpacerItem, QSizePolicy,
     QPushButton, QFileDialog, QMessageBox, QTabWidget,QTableWidget,QTableWidgetItem, QLabel,QFileDialog
 )
-from PySide6.QtGui import QFont, QColor,QBrush
+from PySide6.QtGui import QFont, QColor
 from PySide6.QtCore import Qt
 
-import pandas as pd
 import xlsxwriter
 
 from config_editor import ConfigEditorTab
